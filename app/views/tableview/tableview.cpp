@@ -32,10 +32,14 @@
 #include <QAction>
 #include <QIcon>
 #include <QApplication>
+#include <QPointer>
 
 // Local includes
 
+#include "advancedrenamedialog.h"
+#include "advancedrenameprocessdialog.h"
 #include "contextmenuhelper.h"
+#include "digikam_debug.h"
 #include "fileactionmngr.h"
 #include "album.h"
 #include "applicationsettings.h"
@@ -804,4 +808,30 @@ void TableView::slotSetActive(const bool isActive)
     }
 }
 
+void TableView::rename()
+{
+    QList<QUrl>  urls = selectedUrls();
+    NewNamesList newNamesList;
+
+    qCDebug(DIGIKAM_GENERAL_LOG) << "Selected URLs to rename: " << urls;
+
+    QPointer<AdvancedRenameDialog> dlg = new AdvancedRenameDialog(this);
+    dlg->slotAddImages(urls);
+
+    if (dlg->exec() == QDialog::Accepted)
+    {
+        newNamesList = dlg->newNames();
+
+        slotAwayFromSelection();
+    }
+
+    delete dlg;
+
+    if (!newNamesList.isEmpty())
+    {
+        QPointer<AdvancedRenameProcessDialog> dlg = new AdvancedRenameProcessDialog(newNamesList);
+        dlg->exec();
+        delete dlg;
+    }
+}
 } // namespace Digikam

@@ -1890,7 +1890,15 @@ void DigikamView::slotImageAddToExistingQueue(int queueid)
 
 void DigikamView::slotImageRename()
 {
-    d->iconView->rename();
+    switch (viewMode())
+    {
+        case StackedView::TableViewMode:
+            d->tableView->rename();
+            break;
+
+        default:
+            d->iconView->rename();
+    }
 }
 
 void DigikamView::slotImageDelete()
