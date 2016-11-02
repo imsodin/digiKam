@@ -105,6 +105,12 @@ TableView::TableView(QItemSelectionModel* const selectionModel,
     connect(s->tableViewSelectionModel, SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             this, SIGNAL(signalItemsChanged()));
 
+    connect(s->treeView, SIGNAL(collapsed(QModelIndex)),
+            this, SIGNAL(signalItemsChanged()));
+
+    connect(s->treeView, SIGNAL(expanded(QModelIndex)),
+            this, SIGNAL(signalItemsChanged()));
+
     connect(s->tableViewModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
             this, SIGNAL(signalItemsChanged()));
 
