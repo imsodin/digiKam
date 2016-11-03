@@ -62,13 +62,9 @@ public:
 
     void setThumbnailSize(const ThumbnailSize& size);
     ThumbnailSize getThumbnailSize()                  const;
-    QList<qlonglong> selectedImageIdsCurrentFirst()   const;
-    QList<ImageInfo> selectedImageInfos()             const;
-    QList<ImageInfo> selectedImageInfosCurrentFirst() const;
     ImageInfo currentInfo();
     ImageInfoList allInfo()     const;
     QList<QUrl> allUrls()        const;
-    QList<QUrl> selectedUrls()   const;
     int numberOfSelectedItems() const;
     ImageInfo nextInfo()        const;
     ImageInfo previousInfo()    const;
@@ -76,6 +72,12 @@ public:
     void selectAll();
     void clearSelection();
     void invertSelection();
+
+    ImageInfoList      selectedImageInfos()             const;
+    QModelIndexList    selectedIndexesCurrentFirst()    const;
+    ImageInfoList      selectedImageInfosCurrentFirst() const;
+    QList<qlonglong>   selectedImageIdsCurrentFirst()   const;
+    QList<QUrl>        selectedUrls()                   const;
 
 protected:
 
@@ -87,6 +89,9 @@ protected:
     void showTreeViewContextMenuOnEmptyArea(QContextMenuEvent* const event);
     Album* currentAlbum();
     QList<QAction*> getExtraGroupingActions(QObject*const parentObject) const;
+
+    // Converts indexes to imageInfos and adds group members when appropriate
+    ImageInfoList resolveGrouping(const QList<QModelIndex> indexes) const;
 
 public Q_SLOTS:
 
