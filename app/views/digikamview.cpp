@@ -341,7 +341,8 @@ DigikamView::DigikamView(QWidget* const parent, DigikamModelCollection* const mo
     d->gpsSearchSideBar = new GPSSearchSideBarWidget(d->leftSideBar,
                                                      d->modelCollection->getSearchModel(),
                                                      d->searchModificationHelper,
-                                                     d->iconView->imageFilterModel(),d->iconView->getSelectionModel());
+                                                     d->iconView->imageFilterModel(),
+                                                     d->iconView->getSelectionModel());
 
     d->leftSideBarWidgets << d->gpsSearchSideBar;
 #endif // HAVE_MARBLE
@@ -1890,7 +1891,15 @@ void DigikamView::slotImageAddToExistingQueue(int queueid)
 
 void DigikamView::slotImageRename()
 {
-    d->iconView->rename();
+    switch (viewMode())
+    {
+        case StackedView::TableViewMode:
+            d->tableView->rename();
+            break;
+
+        default:
+            d->iconView->rename();
+    }
 }
 
 void DigikamView::slotImageDelete()
@@ -2322,7 +2331,7 @@ void DigikamView::slotFocusAndNextImage()
     d->stackedview->currentWidget()->setFocus();
 
     //select next image, since the user is probably done tagging the current image
-    d->iconView->toNextIndex();
+    slotNextItem();
 }
 
 void DigikamView::slotImageExifOrientation(int orientation)
