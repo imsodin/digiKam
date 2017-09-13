@@ -31,6 +31,7 @@
 // Local includes
 
 #include "digikam_export.h"
+#include "imageinfolist.h"
 
 class QAbstractItemView;
 class QDropEvent;
@@ -64,6 +65,7 @@ public:
 
     /** Create a mime data object for starting a drag from the given Albums */
     virtual QMimeData* createMimeData(const QList<QModelIndex>&);
+    virtual QMimeData* createMimeData(const ImageInfoList&);
 
     /** Returns if the given mime data can be handled. acceptsMimeData shall return true
      *  if a drop of the given mime data will be accepted on any index or place at all.

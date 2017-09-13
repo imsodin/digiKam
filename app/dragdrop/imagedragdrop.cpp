@@ -629,8 +629,11 @@ QStringList ImageDragDropHandler::mimeTypes() const
 
 QMimeData* ImageDragDropHandler::createMimeData(const QList<QModelIndex>& indexes)
 {
-    QList<ImageInfo> infos = model()->imageInfos(indexes);
+    return createMimeData(model()->imageInfos(indexes));
+}
 
+QMimeData* ImageDragDropHandler::createMimeData(const ImageInfoList& infos)
+{
     QList<QUrl>      urls;
     QList<QUrl>      kioURLs;
     QList<int>       albumIDs;

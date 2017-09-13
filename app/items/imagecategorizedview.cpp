@@ -819,18 +819,18 @@ bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType
 }
 
 void ImageCategorizedView::startDrag(Qt::DropActions supportedActions) {
-    ImageInfoList infos = selectedImageInfos(true);
+    ImageInfoList infos = selectedImageInfos();
 
     if (infos.length() > 0)
     {
         QModelIndexList indexes;
         foreach(const ImageInfo& info, infos)
         {
-            qCDebug(DIGIKAM_GENERAL_LOG) << "startDrag name:" << info.name();
             indexes << indexForInfo(info);
         }
+        infos = resolveGrouping(infos);
 
-        QMimeData* const data = dragDropHandler()->createMimeData(indexes);
+        QMimeData* const data = dragDropHandler()->createMimeData(infos);
 
         if (!data)
         {

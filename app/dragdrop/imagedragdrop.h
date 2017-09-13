@@ -58,7 +58,8 @@ public:
     virtual bool dropEvent(QAbstractItemView* view, const QDropEvent* e, const QModelIndex& droppedOn);
     virtual Qt::DropAction accepts(const QDropEvent* e, const QModelIndex& dropIndex);
     virtual QStringList mimeTypes() const;
-    virtual QMimeData* createMimeData(const QList<QModelIndex> &);
+    virtual QMimeData* createMimeData(const QList<QModelIndex>& indexes);
+    virtual QMimeData* createMimeData(const ImageInfoList& infos);
 
 Q_SIGNALS:
 
