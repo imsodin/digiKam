@@ -1,7 +1,7 @@
 # - Try to find the Marble Library
 # Once done this will define
 #
-#  MARBLE_FOUND       - system has Marble
+#  Marble_FOUND       - system has Marble
 #  MARBLE_INCLUDE_DIR - the Marble include directory
 #  MARBLE_LIBRARIES   - the marble core libraries
 #  ASTRO_LIBRARIES    - the marble astro libraries
@@ -25,7 +25,7 @@ INCLUDE( FindPackageHandleStandardArgs )
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS( marble DEFAULT_MSG MARBLE_INCLUDE_DIR MARBLE_LIBRARIES ASTRO_LIBRARIES)
 
-MESSAGE(STATUS "MARBLE_FOUND       = ${MARBLE_FOUND}")
+MESSAGE(STATUS "Marble_FOUND       = ${Marble_FOUND}")
 MESSAGE(STATUS "MARBLE_INCLUDE_DIR = ${MARBLE_INCLUDE_DIR}")
 MESSAGE(STATUS "MARBLE_LIBRARIES   = ${MARBLE_LIBRARIES}")
 MESSAGE(STATUS "ASTRO_LIBRARIES    = ${ASTRO_LIBRARIES}")
