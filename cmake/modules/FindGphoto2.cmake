@@ -16,7 +16,7 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
-set(Gphoto2_FIND_REQUIRED ${Gphoto2_FIND_REQUIRED})
+set(GPHOTO2_FIND_REQUIRED ${Gphoto2_FIND_REQUIRED})
 
 find_path(GPHOTO2_INCLUDE_DIRS gphoto2/gphoto2.h)
 mark_as_advanced(GPHOTO2_INCLUDE_DIRS)
@@ -45,7 +45,7 @@ endif()
 # all listed variables are TRUE
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(GPHOTO2 DEFAULT_MSG
+find_package_handle_standard_args(Gphoto2 DEFAULT_MSG
                                   GPHOTO2_LIBRARY
                                   GPHOTO2_INCLUDE_DIRS)
 
