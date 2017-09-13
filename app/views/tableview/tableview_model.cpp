@@ -1067,7 +1067,7 @@ QList<qlonglong> TableViewModel::imageIds(const QModelIndexList& indexList) cons
     return idList;
 }
 
-QList<ImageInfo> TableViewModel::imageInfos(const QModelIndexList& indexList) const
+ImageInfoList TableViewModel::imageInfos(const QModelIndexList& indexList) const
 {
     QList<ImageInfo> infoList;
 
@@ -1238,7 +1238,7 @@ QMimeData* TableViewModel::mimeData(const QModelIndexList& indexes) const
         }
     }
 
-    QMimeData* const imageModelMimeData   = ddHandler->createMimeData(imageModelIndexList);
+    QMimeData* const imageModelMimeData = ddHandler->createMimeData(imageModelIndexList);
 
     return imageModelMimeData;
 }
@@ -1343,7 +1343,7 @@ qlonglong TableViewModel::imageId(const QModelIndex& anIndex) const
     return anItem->imageId;
 }
 
-QList<ImageInfo> TableViewModel::allImageInfo() const
+ImageInfoList TableViewModel::allImageInfo() const
 {
     return infosFromItems(d->rootItem->children);
 }
@@ -1362,6 +1362,70 @@ void TableViewModel::setGroupingMode(const TableViewModel::GroupingMode newGroup
 
         emit(signalGroupingModeChanged());
     }
+}
+
+bool TableViewModel::needGroupResolving(ApplicationSettings::OperationType type, bool all) const
+{
+    ApplicationSettings::ApplyToEntireGroup applyAll =
+            ApplicationSettings::instance()->getGroupingOperateOnAll(type);
+
+    if (applyAll == ApplicationSettings::No)
+    {
+        return false;
+    }
+    else if (applyAll == ApplicationSettings::Yes)
+    {
+        return true;
+    }
+
+    ImageInfoList infos;
+
+    if (all)
+    {
+        infos = allImageInfo();
+    }
+    else
+    {
+        infos = imageInfos(s->tableViewSelectionModel->selectedRows());
+    }
+
+    foreach(const ImageInfo& info, infos)
+    {
+        QModelIndex index = indexFromImageId(info.id(), 0);
+
+        if (info.hasGroupedImages()
+            && (groupingMode() == GroupingMode::GroupingHideGrouped
+                || (groupingMode() == GroupingMode::GroupingShowSubItems
+                    && !s->treeView->isExpanded(index))))
+        {
+            // Ask whether should be performed on all and return info if no
+            return ApplicationSettings::instance()->askGroupingOperateOnAll(type);
+        }
+    }
+
+    return false;
+}
+
+ImageInfoList TableViewModel::resolveGrouping(const ImageInfoList& infos) const
+{
+    ImageInfoList out;
+
+    foreach(const ImageInfo& info, infos)
+    {
+        QModelIndex index = indexFromImageId(info.id(), 0);
+
+        out << info;
+
+        if (info.hasGroupedImages()
+            && (groupingMode() == GroupingMode::GroupingHideGrouped
+                || (groupingMode() == GroupingMode::GroupingShowSubItems
+                    && !s->treeView->isExpanded(index))))
+        {
+            out << info.groupedImages();
+        }
+    }
+
+    return out;
 }
 
 QModelIndex TableViewModel::deepRowIndex(const int rowNumber) const

@@ -30,6 +30,7 @@
 
 // Local includes
 
+#include "applicationsettings.h"
 #include "coredbchangesets.h"
 #include "tableview_shared.h"
 
@@ -120,9 +121,14 @@ public:
 
     qlonglong        imageId(const QModelIndex& anIndex) const;
     QList<qlonglong> imageIds(const QModelIndexList& indexList) const;
-    QList<ImageInfo> imageInfos(const QModelIndexList& indexList) const;
+    ImageInfoList    imageInfos(const QModelIndexList& indexList) const;
     ImageInfo        imageInfo(const QModelIndex& index) const;
-    QList<ImageInfo> allImageInfo() const;
+    ImageInfoList    allImageInfo() const;
+
+    // Adds group members when appropriate
+    ImageInfoList resolveGrouping(const ImageInfoList& infos) const;
+    bool          needGroupResolving(ApplicationSettings::OperationType type,
+                                     bool all = false) const;
 
     QList<Item*> sortItems(const QList<Item*> itemList);
     class LessThan;
@@ -132,6 +138,7 @@ public:
     void scheduleResort();
     GroupingMode groupingMode() const;
     void setGroupingMode(const GroupingMode newGroupingMode);
+
 
 public:
 

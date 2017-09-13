@@ -266,11 +266,11 @@ ImageInfo TableView::currentInfo() const
 
 ImageInfoList TableView::allInfo(bool grouping) const
 {
-    ImageInfoList infos = s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
+    ImageInfoList infos = s->tableViewModel->allImageInfo();
 
     if (grouping)
     {
-        return resolveGrouping(infos);
+        return s->tableViewModel->resolveGrouping(infos);
     }
 
     return infos;
@@ -574,7 +574,7 @@ ImageInfoList TableView::selectedImageInfos(bool grouping) const
     ImageInfoList infos = s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
 
     if (grouping) {
-        return resolveGrouping(infos);
+        return s->tableViewModel->resolveGrouping(infos);
     }
 
     return infos;
@@ -609,7 +609,7 @@ ImageInfoList TableView::selectedImageInfosCurrentFirst(bool grouping) const
     ImageInfoList infos = s->tableViewModel->imageInfos(selectedIndexesCurrentFirst());
 
     if (grouping) {
-        return resolveGrouping(infos);
+        return s->tableViewModel->resolveGrouping(infos);
     }
 
     return infos;
@@ -625,68 +625,9 @@ QList<QUrl> TableView::selectedUrls(bool grouping) const
     return selectedImageInfos(grouping).toImageUrlList();
 }
 
-ImageInfoList TableView::resolveGrouping(const ImageInfoList& infos) const
-{
-    ImageInfoList out;
-
-    foreach(const ImageInfo& info, infos)
-    {
-        QModelIndex index = s->tableViewModel->indexFromImageId(info.id(), 0);
-
-        out << info;
-
-        if (info.hasGroupedImages()
-            && (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingHideGrouped
-                || (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
-        {
-            out << info.groupedImages();
-        }
-    }
-
-    return out;
-}
-
 bool TableView::needGroupResolving(ApplicationSettings::OperationType type, bool all) const
 {
-    ApplicationSettings::ApplyToEntireGroup applyAll =
-            ApplicationSettings::instance()->getGroupingOperateOnAll(type);
-
-    if (applyAll == ApplicationSettings::No)
-    {
-        return false;
-    }
-    else if (applyAll == ApplicationSettings::Yes)
-    {
-        return true;
-    }
-
-    ImageInfoList infos;
-
-    if (all)
-    {
-        infos = s->tableViewModel->allImageInfo();
-    }
-    else
-    {
-        infos = s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
-    }
-
-    foreach(const ImageInfo& info, infos)
-    {
-        QModelIndex index = s->tableViewModel->indexFromImageId(info.id(), 0);
-
-        if (info.hasGroupedImages()
-            && (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingHideGrouped
-                || (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
-        {
-            // Ask whether should be performed on all and return info if no
-            return ApplicationSettings::instance()->askGroupingOperateOnAll(type);
-        }
-    }
-
-    return false;
+    return s->tableViewModel->needGroupResolving(type, all);
 }
 
 void TableView::rename()

@@ -96,9 +96,6 @@ protected:
     virtual bool eventFilter(QObject* watched, QEvent* event);
     QList<QAction*> getExtraGroupingActions();
 
-    // Adds group members when appropriate
-    ImageInfoList resolveGrouping(const ImageInfoList& infos) const;
-
 public Q_SLOTS:
 
     void slotGoToRow(const int rowNumber, const bool relativeMove);
