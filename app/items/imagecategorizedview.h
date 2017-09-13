@@ -219,10 +219,7 @@ protected:
     virtual void showContextMenuOnIndex(QContextMenuEvent* event, const QModelIndex& index);
 
     // Adds group members when appropriate
-    ImageInfoList resolveGrouping(const QModelIndexList& indexes) const;
     ImageInfoList resolveGrouping(const ImageInfoList& infos) const;
-    bool          needGroupResolving(ApplicationSettings::OperationType type,
-                                     const QList<QModelIndex>& indexes) const;
     bool          needGroupResolving(ApplicationSettings::OperationType type,
                                      const ImageInfoList& infos) const;
 

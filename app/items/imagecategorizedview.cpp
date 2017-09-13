@@ -305,15 +305,18 @@ ImageInfo ImageCategorizedView::imageInfo(const QModelIndex& index) const
 ImageInfoList ImageCategorizedView::imageInfos(const QList<QModelIndex>& indexes,
                                                ApplicationSettings::OperationType type) const
 {
-    return imageInfos(indexes, needGroupResolving(type, indexes));
+    return imageInfos(indexes, needGroupResolving(type, imageInfos(indexes)));
 }
 
 ImageInfoList ImageCategorizedView::imageInfos(const QList<QModelIndex>& indexes, bool grouping) const
 {
+    ImageInfoList infos = d->filterModel->imageInfos(indexes);
+
     if (grouping) {
-        return resolveGrouping(indexes);
+        return resolveGrouping(infos);
     }
-    return d->filterModel->imageInfos(indexes);
+
+    return infos;
 }
 
 ImageInfoList ImageCategorizedView::selectedImageInfos(bool grouping) const
@@ -343,10 +346,13 @@ ImageInfoList ImageCategorizedView::selectedImageInfosCurrentFirst(bool grouping
         }
     }
 
+    ImageInfoList infos = imageInfos(indexes);
+
     if (grouping) {
-        return resolveGrouping(indexes);
+        return resolveGrouping(infos);
     }
-    return imageInfos(indexes);
+
+    return infos;
 }
 
 ImageInfoList ImageCategorizedView::allImageInfos(bool grouping) const
@@ -377,7 +383,7 @@ bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType
         return needGroupResolving(type, allImageInfos());
     }
 
-    return needGroupResolving(type, selectedIndexes());
+    return needGroupResolving(type, selectedImageInfos());
 }
 
 QList<QUrl> ImageCategorizedView::selectedUrls(bool grouping) const
@@ -765,11 +771,6 @@ void ImageCategorizedView::showContextMenuOnInfo(QContextMenuEvent*, const Image
     // implemented in subclass
 }
 
-ImageInfoList ImageCategorizedView::resolveGrouping(const QModelIndexList& indexes) const
-{
-    return resolveGrouping(imageInfos(indexes));
-}
-
 ImageInfoList ImageCategorizedView::resolveGrouping(const ImageInfoList& infos) const
 {
     ImageInfoList outInfos;
@@ -785,12 +786,6 @@ ImageInfoList ImageCategorizedView::resolveGrouping(const ImageInfoList& infos) 
     }
 
     return outInfos;
-}
-
-bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType type,
-                                              const QList<QModelIndex>& indexes) const
-{
-    return needGroupResolving(type, imageInfos(indexes));
 }
 
 bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType type,

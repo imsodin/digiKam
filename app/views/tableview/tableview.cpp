@@ -266,12 +266,14 @@ ImageInfo TableView::currentInfo() const
 
 ImageInfoList TableView::allInfo(bool grouping) const
 {
+    ImageInfoList infos = s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
+
     if (grouping)
     {
-        return resolveGrouping(s->tableViewModel->allImageInfo());
+        return resolveGrouping(infos);
     }
 
-    return s->tableViewModel->allImageInfo();
+    return infos;
 }
 
 void TableView::slotDeleteSelected(const ImageViewUtilities::DeleteMode deleteMode)
