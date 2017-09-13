@@ -223,6 +223,9 @@ protected:
     bool          needGroupResolving(ApplicationSettings::OperationType type,
                                      const ImageInfoList& infos) const;
 
+    // Override to handle grouped images
+    void startDrag(Qt::DropActions supportedActions);
+
 private Q_SLOTS:
 
     void slotIccSettingsChanged(const ICCSettingsContainer&, const ICCSettingsContainer&);

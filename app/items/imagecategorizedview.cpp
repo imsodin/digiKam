@@ -27,6 +27,8 @@
 // Qt includes
 
 #include <QApplication>
+#include <QDrag>
+#include <QPixmap>
 #include <QTimer>
 
 // Local includes
@@ -813,6 +815,32 @@ bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType
     }
 
     return false;
+}
+
+void ImageCategorizedView::startDrag(Qt::DropActions supportedActions) {
+    ImageInfoList infos = selectedImageInfos(true);
+
+    if (infos.length() > 0)
+    {
+        QModelIndexList indexes;
+        foreach(const ImageInfo& info, infos)
+        {
+            indexes << indexForInfo(info);
+        }
+
+        QMimeData* const data = dragDropHandler()->createMimeData(indexes);
+
+        if (!data)
+        {
+            return;
+        }
+
+        QPixmap pixmap    = pixmapForDrag(indexes);
+        QDrag* const drag = new QDrag(asView());
+        drag->setPixmap(pixmap);
+        drag->setMimeData(data);
+        drag->exec(supportedActions, Qt::CopyAction);
+    }
 }
 
 void ImageCategorizedView::paintEvent(QPaintEvent* e)
