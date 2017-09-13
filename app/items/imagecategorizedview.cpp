@@ -413,6 +413,7 @@ void ImageCategorizedView::toIndex(const QUrl& url)
 
 QModelIndex ImageCategorizedView::indexForInfo(const ImageInfo& info) const
 {
+    qCDebug(DIGIKAM_GENERAL_LOG) << "indexForInfo" << info.name();
     return d->filterModel->indexForImageInfo(info);
 }
 
@@ -825,6 +826,7 @@ void ImageCategorizedView::startDrag(Qt::DropActions supportedActions) {
         QModelIndexList indexes;
         foreach(const ImageInfo& info, infos)
         {
+            qCDebug(DIGIKAM_GENERAL_LOG) << "startDrag name:" << info.name();
             indexes << indexForInfo(info);
         }
 

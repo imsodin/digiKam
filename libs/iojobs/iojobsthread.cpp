@@ -90,6 +90,7 @@ void IOJobsThread::move(const QList<QUrl>& srcFiles, const QUrl destAlbum)
 
     foreach (const QUrl& url, srcFiles)
     {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "move: url" << url;
         CopyJob* const j = new CopyJob(url, destAlbum, true);
 
         connectOneJob(j);

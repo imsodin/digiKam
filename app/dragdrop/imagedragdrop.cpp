@@ -638,6 +638,7 @@ QMimeData* ImageDragDropHandler::createMimeData(const QList<QModelIndex>& indexe
 
     foreach(const ImageInfo& info, infos)
     {
+        qCDebug(DIGIKAM_GENERAL_LOG) << "createMimeData name:" << info.name();
         urls.append(info.fileUrl());
         kioURLs.append(info.databaseUrl());
         albumIDs.append(info.albumId());

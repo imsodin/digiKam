@@ -263,9 +263,11 @@ QModelIndex ImageModel::indexForImageId(qlonglong id) const
 
     if (index != -1)
     {
+        qCDebug(DIGIKAM_GENERAL_LOG) << "ImageModel::indexForImageId: createIndex";
         return createIndex(index, 0);
     }
 
+    qCDebug(DIGIKAM_GENERAL_LOG) << "ImageModel::indexForImageId: nullIndex";
     return QModelIndex();
 }
 

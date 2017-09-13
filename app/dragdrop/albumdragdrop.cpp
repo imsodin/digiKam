@@ -136,10 +136,12 @@ bool AlbumDragDropHandler::dropEvent(QAbstractItemView* view, const QDropEvent* 
         for (QList<qlonglong>::const_iterator it = imageIDs.constBegin(); it != imageIDs.constEnd(); ++it)
         {
             ImageInfo info(*it);
+            qCDebug(DIGIKAM_GENERAL_LOG) << "extImgInfList name:" << info.name();
 
             if (info.albumId() != destAlbum->id())
             {
                 extImgInfList << info;
+                qCDebug(DIGIKAM_GENERAL_LOG) << "extImgInfList add name:" << info.name();
             }
         }
 

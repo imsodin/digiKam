@@ -170,7 +170,19 @@ DIO::Private::Private(DIO* const qq)
 
 void DIO::Private::processJob(int operation, const QList<QUrl>& srcList, const QUrl& dest)
 {
+    foreach(const QUrl& url, srcList) {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "processJob input: url" << url;
+    }
     SidecarFinder finder(srcList);
+    foreach(const QUrl& url, finder.localFiles) {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "processJob localFiles: url" << url;
+    }
+    foreach(const QUrl& url, finder.remoteFiles) {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "processJob remoteFiles: url" << url;
+    }
+    foreach(const QUrl& url, finder.possibleRemoteSidecars) {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "processJob possibleRemoteSidecars: url" << url;
+    }
 
     emit jobToCreate(operation, finder.localFiles, dest);
 
@@ -226,6 +238,7 @@ void DIO::Private::imagesToAlbum(int operation, const QList<ImageInfo> infos, co
         filenames << info.name();
         ids << info.id();
         urls << info.fileUrl();
+        qCDebug(DIGIKAM_DATABASE_LOG) << "imagesToAlbum:" << info.fileUrl();
     }
 
     ScanController::instance()->hintAtMoveOrCopyOfItems(ids, dest, filenames);
@@ -310,6 +323,10 @@ void DIO::cleanUp()
 
 void DIO::createJob(int operation, const QList<QUrl>& src, const QUrl& dest)
 {
+    foreach(const QUrl& url, src) {
+        qCDebug(DIGIKAM_IOJOB_LOG) << "createJob:" << url;
+    }
+
     if (src.isEmpty())
     {
         return;
