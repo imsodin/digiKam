@@ -117,41 +117,41 @@ void SidecarFinder::process(const QList<QUrl>& files)
 
 // ------------------------------------------------------------------------------------------------
 
-GroupedImagesFinder::GroupedImagesFinder(const QList<ImageInfo> source)
-{
-    process(source);
-}
+//GroupedImagesFinder::GroupedImagesFinder(const QList<ImageInfo> source)
+//{
+//    process(source);
+//}
 
-void GroupedImagesFinder::process(const QList<ImageInfo> source)
-{
-    QSet<qlonglong> ids;
+//void GroupedImagesFinder::process(const QList<ImageInfo> source)
+//{
+//    QSet<qlonglong> ids;
 
-    foreach (const ImageInfo& info, source)
-    {
-        ids << info.id();
-    }
+//    foreach (const ImageInfo& info, source)
+//    {
+//        ids << info.id();
+//    }
 
-    infos.reserve(source.size());
+//    infos.reserve(source.size());
 
-    foreach (const ImageInfo& info, source)
-    {
-        infos << info;
+//    foreach (const ImageInfo& info, source)
+//    {
+//        infos << info;
 
-        if (info.hasGroupedImages())
-        {
-            foreach (const ImageInfo& groupedImage, info.groupedImages())
-            {
-                if (ids.contains(groupedImage.id()))
-                {
-                    continue;
-                }
+//        if (info.hasGroupedImages())
+//        {
+//            foreach (const ImageInfo& groupedImage, info.groupedImages())
+//            {
+//                if (ids.contains(groupedImage.id()))
+//                {
+//                    continue;
+//                }
 
-                infos << groupedImage;
-                ids << groupedImage.id();
-            }
-        }
-    }
-}
+//                infos << groupedImage;
+//                ids << groupedImage.id();
+//            }
+//        }
+//    }
+//}
 
 // ------------------------------------------------------------------------------------------------
 
@@ -213,14 +213,15 @@ void DIO::Private::albumToAlbum(int operation, const PAlbum* const src, const PA
 
 void DIO::Private::imagesToAlbum(int operation, const QList<ImageInfo> infos, const PAlbum* const dest)
 {
-    // this is a fast db operation, do here
-    GroupedImagesFinder finder(infos);
+//    // this is a fast db operation, do here
+//    GroupedImagesFinder finder(infos);
 
     QStringList      filenames;
     QList<qlonglong> ids;
     QList<QUrl>      urls;
 
-    foreach(const ImageInfo& info, finder.infos)
+//    foreach(const ImageInfo& info, finder.infos)
+    foreach(const ImageInfo& info, infos)
     {
         filenames << info.name();
         ids << info.id();
