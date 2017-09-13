@@ -301,7 +301,7 @@ else()
 endif()
 
 # decide if Presentation tool can be built with OpenGL
-if(OpenGL_FOUND AND OpenGL_GLU_FOUND AND Qt5OpenGL_FOUND)
+if(OPENGL_FOUND AND OPENGL_GLU_FOUND AND Qt5OpenGL_FOUND)
     set(HAVE_OPENGL TRUE)
 elseif()
     set(HAVE_OPENGL FALSE)
