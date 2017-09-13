@@ -569,10 +569,13 @@ void TableView::slotSetActive(const bool isActive)
 
 ImageInfoList TableView::selectedImageInfos(bool grouping) const
 {
+    ImageInfoList infos = s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
+
     if (grouping) {
-        return resolveGrouping(s->tableViewSelectionModel->selectedRows());
+        return resolveGrouping(infos);
     }
-    return s->tableViewModel->imageInfos(s->tableViewSelectionModel->selectedRows());
+
+    return infos;
 }
 
 ImageInfoList TableView::selectedImageInfos(ApplicationSettings::OperationType type) const
@@ -601,10 +604,13 @@ QModelIndexList TableView::selectedIndexesCurrentFirst() const
 
 ImageInfoList TableView::selectedImageInfosCurrentFirst(bool grouping) const
 {
+    ImageInfoList infos = s->tableViewModel->imageInfos(selectedIndexesCurrentFirst());
+
     if (grouping) {
-        return resolveGrouping(selectedIndexesCurrentFirst());
+        return resolveGrouping(infos);
     }
-    return s->tableViewModel->imageInfos(selectedIndexesCurrentFirst());
+
+    return infos;
 }
 
 QList<qlonglong> TableView::selectedImageIdsCurrentFirst(bool grouping) const
@@ -615,11 +621,6 @@ QList<qlonglong> TableView::selectedImageIdsCurrentFirst(bool grouping) const
 QList<QUrl> TableView::selectedUrls(bool grouping) const
 {
     return selectedImageInfos(grouping).toImageUrlList();
-}
-
-ImageInfoList TableView::resolveGrouping(const QList<QModelIndex>& indexes) const
-{
-    return resolveGrouping(s->tableViewModel->imageInfos(indexes));
 }
 
 ImageInfoList TableView::resolveGrouping(const ImageInfoList& infos) const
