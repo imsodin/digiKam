@@ -1069,7 +1069,7 @@ QList<qlonglong> TableViewModel::imageIds(const QModelIndexList& indexList) cons
 
 ImageInfoList TableViewModel::imageInfos(const QModelIndexList& indexList) const
 {
-    QList<ImageInfo> infoList;
+    ImageInfoList infoList;
 
     Q_FOREACH(const QModelIndex& index, indexList)
     {
@@ -1362,70 +1362,6 @@ void TableViewModel::setGroupingMode(const TableViewModel::GroupingMode newGroup
 
         emit(signalGroupingModeChanged());
     }
-}
-
-bool TableViewModel::needGroupResolving(ApplicationSettings::OperationType type, bool all) const
-{
-    ApplicationSettings::ApplyToEntireGroup applyAll =
-            ApplicationSettings::instance()->getGroupingOperateOnAll(type);
-
-    if (applyAll == ApplicationSettings::No)
-    {
-        return false;
-    }
-    else if (applyAll == ApplicationSettings::Yes)
-    {
-        return true;
-    }
-
-    ImageInfoList infos;
-
-    if (all)
-    {
-        infos = allImageInfo();
-    }
-    else
-    {
-        infos = imageInfos(s->tableViewSelectionModel->selectedRows());
-    }
-
-    foreach(const ImageInfo& info, infos)
-    {
-        QModelIndex index = indexFromImageId(info.id(), 0);
-
-        if (info.hasGroupedImages()
-            && (groupingMode() == GroupingMode::GroupingHideGrouped
-                || (groupingMode() == GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
-        {
-            // Ask whether should be performed on all and return info if no
-            return ApplicationSettings::instance()->askGroupingOperateOnAll(type);
-        }
-    }
-
-    return false;
-}
-
-ImageInfoList TableViewModel::resolveGrouping(const ImageInfoList& infos) const
-{
-    ImageInfoList out;
-
-    foreach(const ImageInfo& info, infos)
-    {
-        QModelIndex index = indexFromImageId(info.id(), 0);
-
-        out << info;
-
-        if (info.hasGroupedImages()
-            && (groupingMode() == GroupingMode::GroupingHideGrouped
-                || (groupingMode() == GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
-        {
-            out << info.groupedImages();
-        }
-    }
-
-    return out;
 }
 
 QModelIndex TableViewModel::deepRowIndex(const int rowNumber) const
