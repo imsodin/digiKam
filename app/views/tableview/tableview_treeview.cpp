@@ -40,7 +40,7 @@
 #include "tableview_columnfactory.h"
 #include "tableview_model.h"
 #include "tableview_selection_model_syncer.h"
-#include "tableview_treeview_delegate.h"
+#include "tableview_delegate.h"
 #include "thumbnailsize.h"
 
 namespace Digikam
@@ -250,9 +250,7 @@ QModelIndex TableViewTreeView::mapIndexForDragDrop(const QModelIndex& index) con
     // we have to convert it to an index of ImageModel.
 
     // map to ImageModel
-    const QModelIndex imageModelIndex = s->tableViewModel->toImageModelIndex(index);
-
-    return imageModelIndex;
+    return s->tableViewModel->toImageModelIndex(index);
 }
 
 QPixmap TableViewTreeView::pixmapForDrag(const QList< QModelIndex >& indexes) const
@@ -306,6 +304,28 @@ Album* TableViewTreeView::albumAt(const QPoint& pos) const
     }
 
     return 0;
+}
+
+ImageInfoList TableViewTreeView::resolveGrouping(const ImageInfoList& infos) const
+{
+    ImageInfoList out;
+
+    foreach(const ImageInfo& info, infos)
+    {
+        QModelIndex index = s->tableViewModel->indexFromImageId(info.id(), 0);
+
+        out << info;
+
+        if (info.hasGroupedImages()
+            && (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingHideGrouped
+                || (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingShowSubItems
+                    && !s->treeView->isExpanded(index))))
+        {
+            out << info.groupedImages();
+        }
+    }
+
+    return out;
 }
 
 void TableViewTreeView::wheelEvent(QWheelEvent* event)

@@ -60,6 +60,7 @@ namespace
 
 // ------------------------------------------------------------------------------------------------
 
+// Also returns the arguments, not just sidecars
 SidecarFinder::SidecarFinder(const QList<QUrl>& files)
 {
     process(files);

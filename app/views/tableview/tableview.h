@@ -27,31 +27,33 @@
 // Qt includes
 
 #include <QWidget>
+#include <QTreeView>
 
 // Local includes
 
 #include "applicationsettings.h"
-#include "dcategorizedsortfilterproxymodel.h"
 #include "digikam_export.h"
+#include "dragdropimplementations.h"
 #include "imageviewutilities.h"
-#include "imageinfo.h"
 #include "statesavingobject.h"
 
-class QMenu;
 class QContextMenuEvent;
-class QItemDelegate;
 class QItemSelectionModel;
-class QTreeView;
+class QMenu;
 
 namespace Digikam
 {
 
 class Album;
+class DCategorizedSortFilterProxyModel;
 class ImageFilterModel;
+class ImageInfo;
+class ImageInfoList;
 class ThumbnailSize;
 class TableViewShared;
+enum ApplicationSettings::OperationType;
 
-class TableView : public QWidget, public StateSavingObject
+class TableView : public QTreeView, public StateSavingObject, public DragDropViewImplementation
 {
     Q_OBJECT
 
@@ -63,20 +65,17 @@ public:
 
     virtual ~TableView();
 
-    void setThumbnailSize(const ThumbnailSize& size);
+    void          setThumbnailSize(const ThumbnailSize& size);
     ThumbnailSize getThumbnailSize()                                     const;
-    ImageInfo currentInfo()                                              const;
-    Album* currentAlbum()                                                const;
-    ImageInfoList allInfo(bool grouping = false)                         const;
-    QList<QUrl> allUrls(bool grouping = false)                           const;
-    int numberOfSelectedItems()                                          const;
-    ImageInfo nextInfo()                                                 const;
-    ImageInfo previousInfo()                                             const;
-    ImageInfo deepRowImageInfo(const int rowNumber, const bool relative) const;
 
-    void selectAll();
-    void clearSelection();
-    void invertSelection();
+    Album*        currentAlbum()                                             const;
+    Album*        albumAt(const QPoint& pos)                                 const;
+    ImageInfo     currentInfo()                                              const;
+    ImageInfo     nextInfo()                                                 const;
+    ImageInfo     previousInfo()                                             const;
+    ImageInfo     deepRowImageInfo(const int rowNumber, const bool relative) const;
+    QList<QUrl>   allUrls(bool grouping = false)                             const;
+    ImageInfoList allInfo(bool grouping = false)                             const;
 
     QModelIndexList  selectedIndexesCurrentFirst()                               const;
     ImageInfoList    selectedImageInfos(bool grouping = false)                   const;
@@ -84,20 +83,16 @@ public:
     ImageInfoList    selectedImageInfosCurrentFirst(bool grouping = false)       const;
     QList<qlonglong> selectedImageIdsCurrentFirst(bool grouping = false)         const;
     QList<QUrl>      selectedUrls(bool grouping = false)                         const;
-
-    bool             needGroupResolving(ApplicationSettings::OperationType type,
-                                        bool all = false) const;
-
-protected:
-
-    void doLoadState();
-    void doSaveState();
-
-    virtual bool eventFilter(QObject* watched, QEvent* event);
-    QList<QAction*> getExtraGroupingActions();
+    int              numberOfSelectedItems()                                     const;
 
     // Adds group members when appropriate
-    ImageInfoList resolveGrouping(const ImageInfoList& infos) const;
+    ImageInfoList    resolveGrouping(const ImageInfoList& infos) const;
+    bool             needGroupResolving(ApplicationSettings::OperationType type,
+                                        bool all = false)        const;
+
+    void selectAll();
+    void clearSelection();
+    void invertSelection();
 
 public Q_SLOTS:
 
@@ -109,6 +104,21 @@ public Q_SLOTS:
     void slotSetActive(const bool isActive);
     void slotPaste();
     void rename();
+
+protected:
+
+    void doLoadState();
+    void doSaveState();
+
+    virtual bool eventFilter(QObject* watched, QEvent* event);
+    QList<QAction*> getExtraGroupingActions();
+
+    DECLARE_VIEW_DRAG_DROP_METHODS(QTreeView)
+
+    virtual AbstractItemDragDropHandler* dragDropHandler() const;
+    virtual QModelIndex mapIndexForDragDrop(const QModelIndex& index) const;
+    virtual QPixmap     pixmapForDrag(const QList<QModelIndex>& indexes) const;
+    virtual void wheelEvent(QWheelEvent* event);
 
 protected Q_SLOTS:
 
@@ -131,6 +141,18 @@ Q_SIGNALS:
     void signalShowContextMenuOnInfo(QContextMenuEvent* event, const ImageInfo& info,
                                      const QList<QAction*>& actions,
                                      ImageFilterModel* filterModel = 0);
+
+private:
+
+    void addColumnDescriptionsToMenu(const QList<TableViewColumnDescription>& columnDescriptions, QMenu* const menu);
+    void showHeaderContextMenu(QEvent* const event);
+
+private Q_SLOTS:
+
+    void slotHeaderContextMenuAddColumn();
+    void slotHeaderContextMenuConfigureColumn();
+    void slotHeaderContextMenuActionRemoveColumnTriggered();
+    void slotModelGroupingModeChanged();
 
 private:
 

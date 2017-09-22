@@ -32,12 +32,8 @@
 
 #include "digikam_export.h"
 #include "dragdropimplementations.h"
-#include "imagealbummodel.h"
-#include "imagefiltermodel.h"
-#include "statesavingobject.h"
 #include "tableview_columnfactory.h"
 #include "tableview_shared.h"
-#include "thumbnailloadthread.h"
 
 class QMenu;
 class QContextMenuEvent;
@@ -59,6 +55,9 @@ public:
     virtual ~TableViewTreeView();
 
     Album* albumAt(const QPoint& pos) const;
+
+    // Adds group members when appropriate
+    ImageInfoList resolveGrouping(const ImageInfoList& infos) const;
 
 protected:
 

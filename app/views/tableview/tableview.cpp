@@ -39,10 +39,11 @@
 
 #include "advancedrenamedialog.h"
 #include "advancedrenameprocessdialog.h"
+#include "album.h"
 #include "contextmenuhelper.h"
 #include "digikam_debug.h"
 #include "fileactionmngr.h"
-#include "album.h"
+#include "imageinfo.h"
 #include "imageviewutilities.h"
 #include "tableview_columnfactory.h"
 #include "tableview_model.h"
@@ -63,19 +64,28 @@ public:
     Private()
       : columnProfiles(),
         thumbnailSize(),
-        imageViewUtilities(0)
+        imageViewUtilities(0),
+        headerContextMenuActiveColumn(-1),
+        actionHeaderContextMenuRemoveColumn(0),
+        actionHeaderContextMenuConfigureColumn(0),
+        dragDropThumbnailSize()
     {
     }
 
     QList<TableViewColumnProfile> columnProfiles;
     ThumbnailSize                 thumbnailSize;
     ImageViewUtilities*           imageViewUtilities;
+
+    int           headerContextMenuActiveColumn;
+    QAction*      actionHeaderContextMenuRemoveColumn;
+    QAction*      actionHeaderContextMenuConfigureColumn;
+    ThumbnailSize dragDropThumbnailSize;
 };
 
 TableView::TableView(QItemSelectionModel* const selectionModel,
                      DCategorizedSortFilterProxyModel* const imageFilterModel,
                      QWidget* const parent)
-    : QWidget(parent),
+    : QTreeView(parent),
       StateSavingObject(this),
       d(new Private()),
       s(new TableViewShared())
@@ -92,27 +102,56 @@ TableView::TableView(QItemSelectionModel* const selectionModel,
     s->tableViewModel                = new TableViewModel(s.data(), this);
     s->tableViewSelectionModel       = new QItemSelectionModel(s->tableViewModel);
     s->tableViewSelectionModelSyncer = new TableViewSelectionModelSyncer(s.data(), this);
-    s->treeView                      = new TableViewTreeView(s.data(), this);
-    s->treeView->installEventFilter(this);
+    setModel(s->tableViewModel);
+    setSelectionModel(s->tableViewSelectionModel);
+
+    s->itemDelegate = new TableViewItemDelegate(s, this);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
+    setItemDelegate(s->itemDelegate);
+    setAlternatingRowColors(true);
+    setSortingEnabled(true);
+    setAllColumnsShowFocus(true);
+    setDragEnabled(true);
+    setAcceptDrops(true);
+    setWordWrap(true);
+//     viewport()->setAcceptDrops(true);
+
+    d->actionHeaderContextMenuRemoveColumn = new QAction(QIcon::fromTheme(QLatin1String("edit-table-delete-column")), i18n("Remove this column"), this);
+
+    connect(d->actionHeaderContextMenuRemoveColumn, SIGNAL(triggered(bool)),
+            this, SLOT(slotHeaderContextMenuActionRemoveColumnTriggered()));
+
+    d->actionHeaderContextMenuConfigureColumn = new QAction(QIcon::fromTheme(QLatin1String("configure")), i18n("Configure this column"), this);
+
+    connect(d->actionHeaderContextMenuConfigureColumn, SIGNAL(triggered(bool)),
+            this, SLOT(slotHeaderContextMenuConfigureColumn()));
+
+    header()->installEventFilter(this);
+
+    slotModelGroupingModeChanged();
+
+    connect(s->tableViewModel, SIGNAL(signalGroupingModeChanged()),
+            this, SLOT(slotModelGroupingModeChanged()));
+    installEventFilter(this);
 
     d->imageViewUtilities            = new ImageViewUtilities(this);
 
-    connect(s->treeView, SIGNAL(activated(QModelIndex)),
+    connect(this, SIGNAL(activated(QModelIndex)),
             this, SLOT(slotItemActivated(QModelIndex)));
 
-    connect(s->treeView, SIGNAL(signalZoomInStep()),
+    connect(this, SIGNAL(signalZoomInStep()),
             this, SIGNAL(signalZoomInStep()));
 
-    connect(s->treeView, SIGNAL(signalZoomOutStep()),
+    connect(this, SIGNAL(signalZoomOutStep()),
             this, SIGNAL(signalZoomOutStep()));
 
     connect(s->tableViewSelectionModel, SIGNAL(selectionChanged(QItemSelection,QItemSelection)),
             this, SIGNAL(signalItemsChanged()));
 
-    connect(s->treeView, SIGNAL(collapsed(QModelIndex)),
+    connect(this, SIGNAL(collapsed(QModelIndex)),
             this, SIGNAL(signalItemsChanged()));
 
-    connect(s->treeView, SIGNAL(expanded(QModelIndex)),
+    connect(this, SIGNAL(expanded(QModelIndex)),
             this, SIGNAL(signalItemsChanged()));
 
     connect(s->tableViewModel, SIGNAL(rowsInserted(QModelIndex,int,int)),
@@ -127,7 +166,7 @@ TableView::TableView(QItemSelectionModel* const selectionModel,
     connect(s->tableViewModel, SIGNAL(modelReset()),
             this, SIGNAL(signalItemsChanged()));
 
-    vbox1->addWidget(s->treeView);
+    vbox1->addWidget(this);
 
     setLayout(vbox1);
 }
@@ -151,7 +190,7 @@ void TableView::doLoadState()
 
     if (!profile.headerState.isEmpty())
     {
-        s->treeView->header()->restoreState(profile.headerState);
+        header()->restoreState(profile.headerState);
     }
 }
 
@@ -160,10 +199,86 @@ void TableView::doSaveState()
     KConfigGroup group = getConfigGroup();
 
     TableViewColumnProfile profile   = s->tableViewModel->getColumnProfile();
-    profile.headerState              = s->treeView->header()->saveState();
+    profile.headerState              = header()->saveState();
     KConfigGroup groupCurrentProfile = group.group("Current Profile");
     profile.saveSettings(groupCurrentProfile);
     group.writeEntry("Grouping mode", int(s->tableViewModel->groupingMode()));
+}
+
+AbstractItemDragDropHandler* TableViewTreeView::dragDropHandler() const
+{
+    qCDebug(DIGIKAM_GENERAL_LOG)<<s->imageModel->dragDropHandler();
+    return s->imageModel->dragDropHandler();
+}
+
+QModelIndex TableViewTreeView::mapIndexForDragDrop(const QModelIndex& index) const
+{
+    // "index" is a TableViewModel index.
+    // We are using the drag-drop-handler of ImageModel, thus
+    // we have to convert it to an index of ImageModel.
+
+    // map to ImageModel
+    return s->tableViewModel->toImageModelIndex(index);
+}
+
+QPixmap TableViewTreeView::pixmapForDrag(const QList< QModelIndex >& indexes) const
+{
+    const QModelIndex& firstIndex = indexes.at(0);
+    const ImageInfo info          = s->tableViewModel->imageInfo(firstIndex);
+    const QString path            = info.filePath();
+
+    QPixmap thumbnailPixmap;
+    /// @todo The first thumbnail load always fails. We have to add thumbnail pre-generation
+    ///       like in ImageModel. Getting thumbnails from ImageModel does not help, because it
+    ///       does not necessarily prepare them the same way.
+    /// @todo Make a central drag-drop thumbnail generator?
+    if (!s->thumbnailLoadThread->find(info.thumbnailIdentifier(), thumbnailPixmap, d->dragDropThumbnailSize.size()))
+    {
+        /// @todo better default pixmap?
+        thumbnailPixmap.fill();
+    }
+
+    /// @todo Decorate the pixmap like the other drag-drop implementations?
+    /// @todo Write number of images onto the pixmap
+    return thumbnailPixmap;
+
+//     const QModelIndex& firstIndex = indexes.at(0);
+//     const QModelIndex& imageModelIndex = s->sortModel->toImageModelIndex(firstIndex);
+//     ImageModel* const imageModel = s->imageFilterModel->sourceImageModel();
+//
+//     /// @todo Determine how other views choose the size
+//     const QSize thumbnailSize(60, 60);
+//
+//     imageModel->setData(imageModelIndex, qMax(thumbnailSize.width(), thumbnailSize.height()), ImageModel::ThumbnailRole);
+//     QVariant thumbnailData = imageModel->data(imageModelIndex, ImageModel::ThumbnailRole);
+//     imageModel->setData(imageModelIndex, QVariant(), ImageModel::ThumbnailRole);
+//
+//     QPixmap thumbnailPixmap = thumbnailData.value<QPixmap>();
+//
+//     /// @todo Write number of images onto the pixmap
+//     return thumbnailPixmap;
+}
+
+void TableViewTreeView::wheelEvent(QWheelEvent* event)
+{
+    if (event->modifiers() & Qt::ControlModifier)
+    {
+        const int delta = event->delta();
+
+        if (delta > 0)
+        {
+            emit(signalZoomInStep());
+        }
+        else if (delta < 0)
+        {
+            emit(signalZoomOutStep());
+        }
+
+        event->accept();
+        return;
+    }
+
+    QTreeView::wheelEvent(event);
 }
 
 void TableView::slotItemActivated(const QModelIndex& tableViewIndex)
@@ -192,15 +307,37 @@ void TableView::slotItemActivated(const QModelIndex& tableViewIndex)
     }
 }
 
+void TableView::slotGroupingModeActionTriggered()
+{
+    const QAction* const senderAction = qobject_cast<QAction*>(sender());
+
+    if (!senderAction)
+    {
+        return;
+    }
+
+    const TableViewModel::GroupingMode newGroupingMode = senderAction->data().value<TableViewModel::GroupingMode>();
+    s->tableViewModel->setGroupingMode(newGroupingMode);
+}
+
 bool TableView::eventFilter(QObject* watched, QEvent* event)
 {
+    QHeaderView* const headerView = header();
+
+    if ((watched == headerView) && (event->type() == QEvent::ContextMenu))
+    {
+        showHeaderContextMenu(event);
+
+        return true;
+    }
+
     // we are looking for context menu events for the table view
-    if ((watched == s->treeView) && (event->type() == QEvent::ContextMenu))
+    if ((watched == this) && (event->type() == QEvent::ContextMenu))
     {
         QContextMenuEvent* const e = static_cast<QContextMenuEvent*>(event);
         e->accept();
 
-        const QModelIndex contextMenuIndex = s->treeView->indexAt(e->pos());
+        const QModelIndex contextMenuIndex = indexAt(e->pos());
 
         if (contextMenuIndex.isValid())
         {
@@ -332,19 +469,6 @@ QList<QAction*> TableView::getExtraGroupingActions()
     actionList << actionShowSubItems;
 
     return actionList;
-}
-
-void TableView::slotGroupingModeActionTriggered()
-{
-    const QAction* const senderAction = qobject_cast<QAction*>(sender());
-
-    if (!senderAction)
-    {
-        return;
-    }
-
-    const TableViewModel::GroupingMode newGroupingMode = senderAction->data().value<TableViewModel::GroupingMode>();
-    s->tableViewModel->setGroupingMode(newGroupingMode);
 }
 
 QList<QUrl> TableView::allUrls(bool grouping) const
@@ -556,7 +680,7 @@ void TableView::invertSelection()
 void TableView::selectAll()
 {
     /// @todo This only selects expanded items.
-    s->treeView->selectAll();
+    selectAll();
 }
 
 void TableView::slotSetActive(const bool isActive)
@@ -638,7 +762,7 @@ ImageInfoList TableView::resolveGrouping(const ImageInfoList& infos) const
         if (info.hasGroupedImages()
             && (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingHideGrouped
                 || (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
+                    && !isExpanded(index))))
         {
             out << info.groupedImages();
         }
@@ -679,7 +803,7 @@ bool TableView::needGroupResolving(ApplicationSettings::OperationType type, bool
         if (info.hasGroupedImages()
             && (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingHideGrouped
                 || (s->tableViewModel->groupingMode() == s->tableViewModel->GroupingMode::GroupingShowSubItems
-                    && !s->treeView->isExpanded(index))))
+                    && !isExpanded(index))))
         {
             // Ask whether should be performed on all and return info if no
             return ApplicationSettings::instance()->askGroupingOperateOnAll(type);
@@ -716,4 +840,126 @@ void TableView::rename()
         delete dlg;
     }
 }
+
+void TableView::addColumnDescriptionsToMenu(const QList<TableViewColumnDescription>& columnDescriptions, QMenu* const menu)
+{
+    for (int i = 0; i < columnDescriptions.count(); ++i)
+    {
+        const TableViewColumnDescription& desc = columnDescriptions.at(i);
+        QAction* const action                  = new QAction(desc.columnTitle, menu);
+
+        if (!desc.columnIcon.isEmpty())
+        {
+            action->setIcon(QIcon::fromTheme(desc.columnIcon));
+        }
+
+        if (desc.subColumns.isEmpty())
+        {
+            connect(action, SIGNAL(triggered(bool)),
+                    this, SLOT(slotHeaderContextMenuAddColumn()));
+
+            action->setData(QVariant::fromValue<TableViewColumnDescription>(desc));
+        }
+        else
+        {
+            QMenu* const subMenu = new QMenu(menu);
+            addColumnDescriptionsToMenu(desc.subColumns, subMenu);
+
+            action->setMenu(subMenu);
+        }
+
+        menu->addAction(action);
+    }
+}
+
+void TableView::showHeaderContextMenu(QEvent* const event)
+{
+    QContextMenuEvent* const e                = static_cast<QContextMenuEvent*>(event);
+    QHeaderView* const headerView             = header();
+    d->headerContextMenuActiveColumn          = headerView->logicalIndexAt(e->pos());
+    const TableViewColumn* const columnObject = s->tableViewModel->getColumnObject(d->headerContextMenuActiveColumn);
+    QMenu* const menu                         = new QMenu(this);
+
+    d->actionHeaderContextMenuRemoveColumn->setEnabled(s->tableViewModel->columnCount(QModelIndex())>1);
+    menu->addAction(d->actionHeaderContextMenuRemoveColumn);
+    const bool columnCanConfigure = columnObject->getColumnFlags().testFlag(TableViewColumn::ColumnHasConfigurationWidget);
+    d->actionHeaderContextMenuConfigureColumn->setEnabled(columnCanConfigure);
+    menu->addAction(d->actionHeaderContextMenuConfigureColumn);
+    menu->addSeparator();
+
+    // add actions for all columns
+    QList<TableViewColumnDescription> columnDescriptions = s->columnFactory->getColumnDescriptionList();
+    addColumnDescriptionsToMenu(columnDescriptions, menu);
+
+    menu->exec(e->globalPos());
+}
+
+void TableView::slotHeaderContextMenuAddColumn()
+{
+    QAction* const triggeredAction = qobject_cast<QAction*>(sender());
+
+    const QVariant actionData = triggeredAction->data();
+
+    if (!actionData.canConvert<TableViewColumnDescription>())
+    {
+        return;
+    }
+
+    const TableViewColumnDescription desc = actionData.value<TableViewColumnDescription>();
+    qCDebug(DIGIKAM_GENERAL_LOG) << "clicked: " << desc.columnTitle;
+    const int newColumnLogicalIndex       = d->headerContextMenuActiveColumn+1;
+    s->tableViewModel->addColumnAt(desc, newColumnLogicalIndex);
+
+    // since the header column order is not the same as the model's column order, we need
+    // to make sure the new column is moved directly behind the current column in the header:
+    const int clickedVisualIndex   = header()->visualIndex(d->headerContextMenuActiveColumn);
+    const int newColumnVisualIndex = header()->visualIndex(newColumnLogicalIndex);
+    int newColumnVisualTargetIndex = clickedVisualIndex + 1;
+
+    // If the column is inserted before the clicked column, we have to
+    // subtract one from the target index because it looks like QHeaderView first removes
+    // the column and then inserts it.
+    if (newColumnVisualIndex < clickedVisualIndex)
+    {
+        newColumnVisualTargetIndex--;
+    }
+
+    if (newColumnVisualIndex!=newColumnVisualTargetIndex)
+    {
+        header()->moveSection(newColumnVisualIndex, newColumnVisualTargetIndex);
+    }
+
+    // Ensure that the newly created column is visible.
+    // This is especially important if the new column is the last one,
+    // because then it can be outside of the viewport.
+    const QModelIndex topIndex = indexAt(QPoint(0, 0));
+    const QModelIndex targetIndex = s->tableViewModel->index(topIndex.row(), newColumnLogicalIndex, topIndex.parent());
+    scrollTo(targetIndex, EnsureVisible);
+}
+
+void TableView::slotHeaderContextMenuConfigureColumn()
+{
+    TableViewConfigurationDialog* const configurationDialog = new TableViewConfigurationDialog(s, d->headerContextMenuActiveColumn, this);
+    const int result                                        = configurationDialog->exec();
+
+    if (result!=QDialog::Accepted)
+    {
+        return;
+    }
+
+    const TableViewColumnConfiguration newConfiguration = configurationDialog->getNewConfiguration();
+    s->tableViewModel->getColumnObject(d->headerContextMenuActiveColumn)->setConfiguration(newConfiguration);
+}
+
+void TableView::slotHeaderContextMenuActionRemoveColumnTriggered()
+{
+    qCDebug(DIGIKAM_GENERAL_LOG) << "remove column " << d->headerContextMenuActiveColumn;
+    s->tableViewModel->removeColumnAt(d->headerContextMenuActiveColumn);
+}
+
+void TableView::slotModelGroupingModeChanged()
+{
+    setRootIsDecorated(s->tableViewModel->groupingMode()==TableViewModel::GroupingShowSubItems);
+}
+
 } // namespace Digikam

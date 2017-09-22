@@ -327,8 +327,7 @@ set(libdigikamgui_SRCS
     utils/componentsinfo.cpp
 
     views/tableview/tableview.cpp
-    views/tableview/tableview_treeview.cpp
-    views/tableview/tableview_treeview_delegate.cpp
+    views/tableview/tableview_delegate.cpp
     views/tableview/tableview_column_configuration_dialog.cpp
     views/tableview/tableview_model.cpp
     views/tableview/tableview_columns.cpp
