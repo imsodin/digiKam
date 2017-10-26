@@ -38,25 +38,20 @@ DItemDrag::DItemDrag(const QList<QUrl>& urls,
     : QMimeData()
 {
     // Digikam specific mime data
-    QByteArray  ba;
-    QDataStream ds(&ba, QIODevice::WriteOnly);
-    ds << urls;
-    setData(QLatin1String("digikam/item-ids"), ba);
+    QByteArray  ba1;
+    QDataStream ds1(&ba1, QIODevice::WriteOnly);
+    ds1 << kioUrls;
+    setData(QLatin1String("digikam/digikamalbums"), ba1);
 
     QByteArray  ba2;
     QDataStream ds2(&ba2, QIODevice::WriteOnly);
-    ds2 << kioUrls;
-    setData(QLatin1String("digikam/digikamalbums"), ba2);
+    ds2 << albumIDs;
+    setData(QLatin1String("digikam/album-ids"), ba2);
 
     QByteArray  ba3;
     QDataStream ds3(&ba3, QIODevice::WriteOnly);
-    ds3 << albumIDs;
-    setData(QLatin1String("digikam/album-ids"), ba3);
-
-    QByteArray  ba4;
-    QDataStream ds4(&ba4, QIODevice::WriteOnly);
-    ds4 << imageIDs;
-    setData(QLatin1String("digikam/image-ids-long"), ba4);
+    ds3 << imageIDs;
+    setData(QLatin1String("digikam/image-ids"), ba3);
 
     // commonly accessible mime data, for dragging to outside digikam
     setUrls(urls);
@@ -64,11 +59,8 @@ DItemDrag::DItemDrag(const QList<QUrl>& urls,
 
 QStringList DItemDrag::mimeTypes()
 {
-    // we do not want to decode text/uri-list with this object,
-    // we only export this data above for dragging to outside digikam.
-    return QStringList() << QLatin1String("digikam/item-ids")
-                         << QLatin1String("digikam/album-ids")
-                         << QLatin1String("digikam/image-ids-long")
+    return QStringList() << QLatin1String("digikam/album-ids")
+                         << QLatin1String("digikam/image-ids")
                          << QLatin1String("digikam/digikamalbums");
 }
 
@@ -96,22 +88,12 @@ bool DItemDrag::decode(const QMimeData* e,
     albumIDs.clear();
     imageIDs.clear();
 
-    QByteArray ba = e->data(QLatin1String("digikam/item-ids"));
-
-    if (ba.size())
-    {
-        QDataStream ds(ba);
-
-        if (!ds.atEnd())
-        {
-            ds >> urls;
-        }
-    }
+    urls = e->urls();
 
     if (!urls.isEmpty())
     {
         QByteArray albumarray = e->data(QLatin1String("digikam/album-ids"));
-        QByteArray imagearray = e->data(QLatin1String("digikam/image-ids-long"));
+        QByteArray imagearray = e->data(QLatin1String("digikam/image-ids"));
         QByteArray kioarray   = e->data(QLatin1String("digikam/digikamalbums"));
 
         if (albumarray.size() && imagearray.size() && kioarray.size())
@@ -175,7 +157,7 @@ QStringList DAlbumDrag::mimeTypes()
 
 bool DAlbumDrag::canDecode(const QMimeData* e)
 {
-    if (e->hasFormat(QLatin1String("digikam/item-ids")) || e->hasFormat(QLatin1String("digikam/image-ids-long")))
+    if (e->hasFormat(QLatin1String("digikam/item-ids")) || e->hasFormat(QLatin1String("digikam/image-ids")))
     {
         return false;
     }

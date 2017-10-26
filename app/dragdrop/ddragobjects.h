@@ -48,7 +48,7 @@ namespace Digikam
  * copy the images. digiKam can use the IDs, if ItemDrag is dropped
  * on digikam itself.
  * The kioURLs are internally used with the digikamalbums kioslave.
- * The "normal" KURLDrag urls are used for external drops (k3b, gimp, ...)
+ * setUrls of the underlying QMimeData is used for external drops (k3b, gimp, ...)
  */
 class DItemDrag : public QMimeData
 {
