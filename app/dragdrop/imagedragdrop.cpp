@@ -243,7 +243,7 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
     }
 
     // unless we are readonly anyway, we always want an album
-    if (!m_readOnly && (!album || album->isRoot()) )
+    if ( !m_readOnly && (!album || album->isRoot()) )
     {
         return false;
     }
@@ -289,12 +289,14 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
             return false;
         }
 
-        if (urls.isEmpty() || albumIDs.isEmpty() || imageIDs.isEmpty())
+        if (m_readOnly)
         {
-            return false;
+            emit imageInfosDropped(ImageInfoList(imageIDs));
+            return true;
         }
 
-        DropAction action = NoAction;
+        // ---------------------------------------------------------------------
+        // Determine ImageInfo from the index where the drop happened
 
         ImageInfo droppedOnInfo;
 
@@ -312,17 +314,20 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
             }
         }
 
-        if (m_readOnly)
-        {
-            emit imageInfosDropped(ImageInfoList(imageIDs));
-            return true;
-        }
-        else if (palbum)
-        {
-            // Check if items dropped come from outside current album.
-            QList<ImageInfo> extImages, intImages;
+        // ---------------------------------------------------------------------
+        // Determine which action (if any) is to be performed and return early
+        // if nothing else is to be done
 
-            if (imageIDs.isEmpty())
+        DropAction action = NoAction;
+
+        // Check if items dropped come from outside current album.
+        QList<ImageInfo> extImages, intImages;
+        bool onlyInternal;
+
+        if (palbum)
+        {
+            // Check for drop of image on itself
+            if (imageIDs.size() == 1 && ImageInfo(imageIDs.first()) == droppedOnInfo)
             {
                 return false;
             }
@@ -341,15 +346,13 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
                 }
             }
 
-            bool onlyExternal = (intImages.isEmpty() && !extImages.isEmpty());
-            bool onlyInternal = (!intImages.isEmpty() && extImages.isEmpty());
-            bool mixed        = (!intImages.isEmpty() && !extImages.isEmpty());
-
             // Check for drop of image on itself
             if (intImages.size() == 1 && intImages.first() == droppedOnInfo)
             {
                 return false;
             }
+
+            onlyInternal = (!intImages.isEmpty() && extImages.isEmpty());
 
             if (droppedOn.isValid() && onlyInternal)
             {
@@ -359,67 +362,12 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
             {
                 // Determine action. Show Menu only if there are any album-external items.
                 // Ask for grouping if dropped-on is valid (gives LinkAction)
-                action = copyOrMove(e, view, mixed || onlyExternal, !droppedOnInfo.isNull());
-            }
-
-            if (onlyExternal)
-            {
-                // Only external items: copy or move as requested
-
-                if (action == MoveAction)
-                {
-                    DIO::move(extImages, palbum);
-                    return true;
-                }
-                else if (action == CopyAction)
-                {
-                    DIO::copy(extImages, palbum);
-                    return true;
-                }
-            }
-            else if (onlyInternal)
-            {
-                // Only items from the current album:
-                // Move is a no-op. Do not show menu to ask for copy or move.
-                // If the user indicates a copy operation (holding Ctrl), copy.
-
-                if (action == CopyAction)
-                {
-                    DIO::copy(intImages, palbum);
-                    return true;
-                }
-                else if (action == MoveAction)
-                {
-                    return false;
-                }
-            }
-            else if (mixed)
-            {
-                // Mixed items.
-                // For move operations, ignore items from current album.
-                // If user requests copy, copy.
-
-                if (action == MoveAction)
-                {
-                    DIO::move(extImages, palbum);
-                    return true;
-                }
-                else if (action == CopyAction)
-                {
-                    DIO::copy(extImages+intImages, palbum);
-                    return true;
-                }
+                action = copyOrMove(e, view, !extImages.isEmpty(), !droppedOnInfo.isNull());
             }
         }
         else if (talbum)
         {
             action = tagAction(e, view, droppedOn.isValid());
-
-            if (action == AssignTagAction)
-            {
-                emit assignTags(ImageInfoList(imageIDs), QList<int>() << talbum->id());
-                return true;
-            }
         }
         else
         {
@@ -430,32 +378,49 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
             }
         }
 
-        if (action == GroupAction)
+        // ---------------------------------------------------------------------
+        // Perform whatever action has been chosen above
+
+        switch (action)
         {
-            if (droppedOnInfo.isNull())
-            {
-                return false;
-            }
-
-            emit addToGroup(droppedOnInfo, ImageInfoList(imageIDs));
-            return true;
-        }
-
-        if (action == GroupAndMoveAction)
-        {
-            if (droppedOnInfo.isNull())
-            {
-                return false;
-            }
-
-            emit addToGroup(droppedOnInfo, ImageInfoList(imageIDs));
-            DIO::move(ImageInfoList(imageIDs), palbum);
-            return true;
+            case AssignTagAction:
+                emit assignTags(ImageInfoList(imageIDs), QList<int>() << talbum->id());
+                return true;
+            case GroupAction:
+                if (droppedOnInfo.isNull())
+                {
+                    return false;
+                }
+                emit addToGroup(droppedOnInfo, ImageInfoList(imageIDs));
+                return true;
+            case GroupAndMoveAction:
+                if (droppedOnInfo.isNull())
+                {
+                    return false;
+                }
+                emit addToGroup(droppedOnInfo, ImageInfoList(imageIDs));
+                DIO::move(ImageInfoList(imageIDs), palbum);
+                return true;
+            case CopyAction:
+                // We can copy regardless of where the files are from
+                DIO::copy(extImages+intImages, palbum);
+                return true;
+            case MoveAction:
+                if (onlyInternal)
+                {
+                    // Only items from the current album:
+                    // Move is a no-op.
+                    return false;
+                }
+                // Ignored internal images when moving
+                DIO::move(extImages, palbum);
+                return true;
         }
 
         return false;
     }
-    else if (e->mimeData()->hasUrls())
+
+    if (e->mimeData()->hasUrls())
     {
         if (!palbum && !m_readOnly)
         {
@@ -482,17 +447,22 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
         {
             DIO::copy(srcURLs, palbum);
         }
+        else
+        {
+            return false;
+        }
 
         return true;
     }
-    else if (DTagListDrag::canDecode(e->mimeData()))
+
+    if (DTagListDrag::canDecode(e->mimeData()))
     {
         QList<int> tagIDs;
         bool isDecoded = DTagListDrag::decode(e->mimeData(), tagIDs);
 
         if (!isDecoded)
         {
-            qCDebug(DIGIKAM_GENERAL_LOG) << "Error: Deconding failed!";
+            qCDebug(DIGIKAM_GENERAL_LOG) << "Error: Decoding failed!";
             return false;
         }
 
@@ -539,7 +509,8 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
 
         return true;
     }
-    else if (DCameraItemListDrag::canDecode(e->mimeData()))
+
+    if (DCameraItemListDrag::canDecode(e->mimeData()))
     {
         if (!palbum)
         {

@@ -100,32 +100,32 @@ bool DItemDrag::decode(const QMimeData* e,
         }
     }
 
-    if (!urls.isEmpty())
+    if (urls.isEmpty())
     {
-        QByteArray albumarray = e->data(QLatin1String("digikam/album-ids"));
-        QByteArray imagearray = e->data(QLatin1String("digikam/item-ids"));
-
-        if (albumarray.size() && imagearray.size())
-        {
-            QDataStream dsAlbums(albumarray);
-
-            if (!dsAlbums.atEnd())
-            {
-                dsAlbums >> albumIDs;
-            }
-
-            QDataStream dsImages(imagearray);
-
-            if (!dsImages.atEnd())
-            {
-                dsImages >> imageIDs;
-            }
-
-            return true;
-        }
+        return false;
     }
 
-    return false;
+    QByteArray albumarray = e->data(QLatin1String("digikam/album-ids"));
+    QByteArray imagearray = e->data(QLatin1String("digikam/item-ids"));
+
+    if (albumarray.isEmpty() || imagearray.isEmpty())
+    {
+        return false;
+    }
+
+    QDataStream dsAlbums(albumarray);
+    if (!dsAlbums.atEnd())
+    {
+        dsAlbums >> albumIDs;
+    }
+
+    QDataStream dsImages(imagearray);
+    if (!dsImages.atEnd())
+    {
+        dsImages >> imageIDs;
+    }
+
+    return true;
 }
 
 // ------------------------------------------------------------------------
