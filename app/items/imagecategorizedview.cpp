@@ -803,15 +803,16 @@ bool ImageCategorizedView::needGroupResolving(ApplicationSettings::OperationType
     {
         return false;
     }
-    else if (applyAll == ApplicationSettings::Yes)
-    {
-        return true;
-    }
 
+    // Only ask the user/return true if there is a hidden grouped item
     foreach(const ImageInfo& info, infos)
     {
         if (info.hasGroupedImages() && !imageFilterModel()->isGroupOpen(info.id()))
         {
+            if (applyAll == ApplicationSettings::Yes)
+            {
+                return true;
+            }
             // Ask whether should be performed on all and return info if no
             return ApplicationSettings::instance()->askGroupingOperateOnAll(type);
         }
