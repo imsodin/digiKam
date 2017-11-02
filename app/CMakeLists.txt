@@ -325,6 +325,7 @@ set(libdigikamgui_SRCS
     utils/digikammodelcollection.cpp
     utils/digikam_debug.cpp
     utils/componentsinfo.cpp
+    utils/groupingviewimplementation.cpp
 
     views/tableview/tableview.cpp
     views/tableview/tableview_treeview.cpp

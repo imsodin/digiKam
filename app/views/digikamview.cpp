@@ -807,31 +807,17 @@ QList<QUrl> DigikamView::allUrls(bool grouping) const
 {
     /// @todo This functions seems not to be used anywhere right now
 
-    switch (viewMode())
-    {
-        case StackedView::TableViewMode:
-            return d->tableView->allUrls(grouping);
-
-        default:
-            return d->iconView->allUrls(grouping);
-    }
+    return allInfo(grouping).toImageUrlList();
 }
 
 QList<QUrl> DigikamView::selectedUrls(bool grouping) const
 {
-    switch (viewMode())
-    {
-        case StackedView::TableViewMode:
-            return d->tableView->selectedUrls(grouping);
-
-        default:
-            return d->iconView->selectedUrls(grouping);
-    }
+    return selectedInfoList(grouping).toImageUrlList();
 }
 
 QList<QUrl> DigikamView::selectedUrls(const ApplicationSettings::OperationType type) const
 {
-    return selectedUrls(needGroupResolving(type));
+    return selectedInfoList(type).toImageUrlList();
 }
 
 void DigikamView::showSideBars()
@@ -2456,7 +2442,7 @@ ImageInfoList DigikamView::allInfo(const bool grouping) const
     switch (viewMode())
     {
         case StackedView::TableViewMode:
-            return d->tableView->allInfo(grouping);
+            return d->tableView->allImageInfos(grouping);
 
         case StackedView::MapWidgetMode:
         case StackedView::PreviewImageMode:
@@ -2481,13 +2467,21 @@ bool DigikamView::needGroupResolving(const ApplicationSettings::OperationType ty
     switch (viewMode())
     {
         case StackedView::TableViewMode:
-            return d->tableView->needGroupResolving(type, all);
+            if (all)
+            {
+                return d->tableView->allNeedGroupResolving(type);
+            }
+            return d->tableView->selectedNeedGroupResolving(type);
         case StackedView::MapWidgetMode:
         case StackedView::PreviewImageMode:
         case StackedView::MediaPlayerMode:
         case StackedView::IconViewMode:
             // all of these modes use the same selection model and data as the IconViewMode
-            return d->iconView->needGroupResolving(type, all);
+            if (all)
+            {
+                return d->iconView->allNeedGroupResolving(type);
+            }
+            return d->iconView->selectedNeedGroupResolving(type);
 
         default:
             return false;

@@ -415,9 +415,9 @@ bool ImageDragDropHandler::dropEvent(QAbstractItemView* abstractview, const QDro
                 // Ignored internal images when moving
                 DIO::move(extImages, palbum);
                 return true;
+            default:
+                return false;
         }
-
-        return false;
     }
 
     if (e->mimeData()->hasUrls())
