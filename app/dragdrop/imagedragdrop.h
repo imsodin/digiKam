@@ -30,12 +30,14 @@
 
 // Local includes
 
-#include "imageinfo.h"
 #include "abstractitemdragdrophandler.h"
 #include "imagealbummodel.h"
 
 namespace Digikam
 {
+
+class ImageInfo;
+class ImageInfoList;
 
 class ImageDragDropHandler : public AbstractItemDragDropHandler
 {
@@ -58,7 +60,7 @@ public:
     virtual bool dropEvent(QAbstractItemView* view, const QDropEvent* e, const QModelIndex& droppedOn);
     virtual Qt::DropAction accepts(const QDropEvent* e, const QModelIndex& dropIndex);
     virtual QStringList mimeTypes() const;
-    virtual QMimeData* createMimeData(const QList<QModelIndex> &);
+    virtual QMimeData* createMimeData(const QList<QModelIndex>& indexes);
 
 Q_SIGNALS:
 
@@ -70,6 +72,16 @@ Q_SIGNALS:
 protected:
 
     bool m_readOnly;
+};
+
+class ImageGroupDragDropHandler : public ImageDragDropHandler
+{
+    Q_OBJECT
+
+public:
+
+    QMimeData* createGroupMimeData(const ImageInfoList& infos, const ImageInfoList& hidden);
+
 };
 
 } // namespace Digikam

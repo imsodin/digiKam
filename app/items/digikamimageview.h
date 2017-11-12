@@ -89,6 +89,8 @@ protected Q_SLOTS:
     void groupIndicatorClicked(const QModelIndex& index);
     void showGroupContextMenu(const QModelIndex& index, QContextMenuEvent* event);
 
+    virtual void startDrag(Qt::DropActions supportedActions);
+
 protected:
 
     void addRejectionOverlay(ImageDelegate* delegate = 0);

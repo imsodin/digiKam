@@ -250,6 +250,17 @@ ImageInfoList DigikamImageView::imageInfos(const QList<QModelIndex>& indexes,
     return infos;
 }
 
+
+void DigikamImageView::startDrag(Qt::DropActions supportedActions)
+{
+    QModelIndexList indexes = selectedIndexes();
+
+    if (indexes.count() == 0)
+    {
+        return;
+    }
+}
+
 void DigikamImageView::setFaceMode(bool on)
 {
     d->faceMode = on;

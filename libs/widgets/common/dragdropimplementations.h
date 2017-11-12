@@ -139,19 +139,20 @@ protected:
 
     #define DECLARE_VIEW_DRAG_DROP_METHODS(ParentViewClass) \
     virtual QAbstractItemView* asView() { return this; } \
-    void dragEnterEvent(QDragEnterEvent* e) \
+    virtual void dragEnterEvent(QDragEnterEvent* e) \
         { DragDropViewImplementation::dragEnterEvent(e); } \
-    void dragMoveEvent(QDragMoveEvent* e) \
+    virtual void dragMoveEvent(QDragMoveEvent* e) \
         { ParentViewClass::dragMoveEvent(e); \
           DragDropViewImplementation::dragMoveEvent(e); } \
-    void dropEvent(QDropEvent* e) \
+    virtual void dropEvent(QDropEvent* e) \
         { ParentViewClass::dropEvent(e); \
           DragDropViewImplementation::dropEvent(e); } \
-    void startDrag(Qt::DropActions supportedActions) \
+    virtual void startDrag(Qt::DropActions supportedActions) \
         { DragDropViewImplementation::startDrag(supportedActions); } \
 
     void encodeIsCutSelection(QMimeData* mime, bool isCutSelection);
     bool decodeIsCutSelection(const QMimeData* mimeData);
+    void createAndExecDrag(Qt::DropActions supportedActions, QMimeData* data, QModelIndexList indexes);
 };
 
 } // namespace Digikam

@@ -184,21 +184,28 @@ void DragDropViewImplementation::startDrag(Qt::DropActions supportedActions)
 {
     QModelIndexList indexes = asView()->selectionModel()->selectedIndexes();
 
-    if (indexes.count() > 0)
+    if (indexes.count() <= 0)
     {
-        QMimeData* const data = asView()->model()->mimeData(indexes);
-
-        if (!data)
-        {
-            return;
-        }
-
-        QPixmap pixmap    = pixmapForDrag(indexes);
-        QDrag* const drag = new QDrag(asView());
-        drag->setPixmap(pixmap);
-        drag->setMimeData(data);
-        drag->exec(supportedActions, Qt::CopyAction);
+        return;
     }
+
+    QMimeData* const data = asView()->model()->mimeData(indexes);
+
+    if (!data)
+    {
+        return;
+    }
+
+    createAndExecDrag(supportedActions, data, indexes);
+}
+
+void createAndExecDrag(Qt::DropActions supportedActions, QMimeData* data, QModelIndexList indexes)
+{
+    QPixmap pixmap    = pixmapForDrag(indexes);
+    QDrag* const drag = new QDrag(asView());
+    drag->setPixmap(pixmap);
+    drag->setMimeData(data);
+    drag->exec(supportedActions, Qt::CopyAction);
 }
 
 void DragDropViewImplementation::dragEnterEvent(QDragEnterEvent* e)
