@@ -77,11 +77,10 @@ public:
     ImageInfo              currentInfo()           const;
     QUrl                   currentUrl()            const;
 
+    ImageInfoList          allImageInfos() const;
+    QList<QUrl>            allUrls(bool grouping = false) const;
     ImageInfoList          selectedImageInfos() const;
     ImageInfoList          selectedImageInfosCurrentFirst() const;
-
-    ImageInfoList          allImageInfos() const;
-    QList<QUrl>            allUrls() const;
 
     /** Selects the index as current and scrolls to it.
      */

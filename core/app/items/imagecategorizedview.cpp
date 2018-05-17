@@ -308,6 +308,16 @@ ImageInfoList ImageCategorizedView::imageInfos(const QList<QModelIndex>& indexes
     return d->filterModel->imageInfos(indexes);
 }
 
+ImageInfoList ImageCategorizedView::allImageInfos() const
+{
+    return d->filterModel->imageInfosSorted();
+}
+
+QList<QUrl> ImageCategorizedView::allUrls(bool grouping) const
+{
+    return allImageInfos().toImageUrlList();
+}
+
 ImageInfoList ImageCategorizedView::selectedImageInfos() const
 {
     return imageInfos(selectedIndexes());
@@ -330,16 +340,6 @@ ImageInfoList ImageCategorizedView::selectedImageInfosCurrentFirst() const
     }
 
     return imageInfos(indexes);
-}
-
-ImageInfoList ImageCategorizedView::allImageInfos() const
-{
-    return d->filterModel->imageInfosSorted();
-}
-
-QList<QUrl> ImageCategorizedView::allUrls() const
-{
-    return allImageInfos().toImageUrlList();
 }
 
 void ImageCategorizedView::toIndex(const QUrl& url)
