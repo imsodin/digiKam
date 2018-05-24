@@ -30,20 +30,20 @@
 
 #include <QExplicitlySharedDataPointer>
 #include <QMetaMethod>
-#include <QMutex>
 #include <QSharedData>
-#include <QWaitCondition>
 
 // Local includes
 
 #include "facedetector.h"
-#include "faceutils.h"
+#include "imageinfolist.h"
 #include "previewloadthread.h"
-#include "thumbnailloadthread.h"
 #include "workerobject.h"
 
 namespace Digikam
 {
+
+class ThumbnailLoadThread;
+class ThumbnailImageCatcher;
 
 class FacePipelineExtendedPackage : public FacePipelinePackage, public QSharedData
 {
@@ -120,7 +120,7 @@ public:
 
     ScanStateFilter(FacePipeline::FilterMode mode, FacePipeline::Private* const d);
 
-    void process(const QList<ImageInfo>& infos);
+    void process(const ImageInfoList& infos);
     void process(const ImageInfo& info);
 
     FacePipelineExtendedPackage::Ptr filter(const ImageInfo& info);
@@ -145,9 +145,9 @@ protected:
 
 protected:
 
-    QList<ImageInfo>                        toFilter;
+    ImageInfoList                        toFilter;
     QList<FacePipelineExtendedPackage::Ptr> toSend;
-    QList<ImageInfo>                        toBeSkipped;
+    ImageInfoList                        toBeSkipped;
 };
 
 // ----------------------------------------------------------------------------------------
@@ -409,9 +409,9 @@ public:
 
     explicit Private(FacePipeline* q);
 
-    void processBatch(const QList<ImageInfo>& infos);
+    void processBatch(const ImageInfoList& infos);
     void sendFromFilter(const QList<FacePipelineExtendedPackage::Ptr>& packages);
-    void skipFromFilter(const QList<ImageInfo>& infosForSkipping);
+    void skipFromFilter(const ImageInfoList& infosForSkipping);
     void send(FacePipelineExtendedPackage::Ptr package);
     bool senderFlowControl(FacePipelineExtendedPackage::Ptr package);
     void receiverFlowControl();

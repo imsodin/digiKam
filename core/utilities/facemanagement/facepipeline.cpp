@@ -27,7 +27,9 @@
 // Qt includes
 
 #include <QMetaObject>
+#include <QMutex>
 #include <QMutexLocker>
+#include <QWaitCondition>
 
 // KDE includes
 
@@ -38,10 +40,12 @@
 // Local includes
 
 #include "digikam_debug.h"
+#include "faceutils.h"
 #include "loadingdescription.h"
 #include "metadatasettings.h"
 #include "tagscache.h"
 #include "threadmanager.h"
+#include "thumbnailloadthread.h"
 
 namespace Digikam
 {
@@ -304,7 +308,7 @@ FacePipelineExtendedPackage::Ptr ScanStateFilter::filter(const ImageInfo& info)
     return FacePipelineExtendedPackage::Ptr();
 }
 
-void ScanStateFilter::process(const QList<ImageInfo>& infos)
+void ScanStateFilter::process(const ImageInfoList& infos)
 {
     QMutexLocker lock(threadMutex());
     toFilter << infos;
@@ -324,7 +328,7 @@ void ScanStateFilter::run()
     while (runningFlag())
     {
         // get todo list
-        QList<ImageInfo> todo;
+        ImageInfoList todo;
         {
             QMutexLocker lock(threadMutex());
 
@@ -343,7 +347,7 @@ void ScanStateFilter::run()
         if (!todo.isEmpty())
         {
             QList<FacePipelineExtendedPackage::Ptr> send;
-            QList<ImageInfo> skip;
+            ImageInfoList skip;
 
             foreach(const ImageInfo& info, todo)
             {
@@ -376,7 +380,7 @@ void ScanStateFilter::dispatch()
 {
     QList<FacePipelineExtendedPackage::Ptr> send;
 
-    QList<ImageInfo> skip;
+    ImageInfoList skip;
     {
         QMutexLocker lock(threadMutex());
         send = toSend;
@@ -1104,7 +1108,7 @@ FacePipeline::Private::Private(FacePipeline* const q)
     totalPackagesAdded     = 0;
 }
 
-void FacePipeline::Private::processBatch(const QList<ImageInfo>& infos)
+void FacePipeline::Private::processBatch(const ImageInfoList& infos)
 {
     if (databaseFilter)
     {
@@ -1132,7 +1136,7 @@ void FacePipeline::Private::sendFromFilter(const QList<FacePipelineExtendedPacka
 }
 
 // called by filter
-void FacePipeline::Private::skipFromFilter(const QList<ImageInfo>& infosForSkipping)
+void FacePipeline::Private::skipFromFilter(const ImageInfoList& infosForSkipping)
 {
     infosForFiltering -= infosForSkipping.size();
 
@@ -1747,7 +1751,7 @@ void FacePipeline::remove(const ImageInfo& info, const FaceTagsIface& databaseFa
     d->send(package);
 }
 
-void FacePipeline::process(const QList<ImageInfo>& infos)
+void FacePipeline::process(const ImageInfoList& infos)
 {
     d->processBatch(infos);
 }

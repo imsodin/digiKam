@@ -26,16 +26,14 @@
 
 // Qt includes
 
-#include <QFlags>
 #include <QThread>
 
 // Local includes
 
 #include "identity.h"
-#include "digikam_debug.h"
 #include "facetagsiface.h"
 #include "dimg.h"
-#include "imageinfo.h"
+#include "imageinfolist.h"
 #include "recognitiondatabase.h"
 
 namespace Digikam
@@ -286,7 +284,7 @@ public Q_SLOTS:
      * will inform about skipped infos. Filtering is done in a thread, returns immediately.
      * Some of the signals below will be emitted in any case.
      */
-    void process(const QList<ImageInfo>& infos);
+    void process(const ImageInfoList& infos);
 
     void setDetectionAccuracy(double accuracy);
 
@@ -308,7 +306,7 @@ Q_SIGNALS:
     void finished();
 
     /// Emitted when one or several packages were skipped, usually because they have already been scanned.
-    void skipped(const QList<ImageInfo>& skippedInfos);
+    void skipped(const ImageInfoList& skippedInfos);
 
 public:
 

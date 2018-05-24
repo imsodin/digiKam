@@ -102,8 +102,7 @@ FaceTagsIface DigikamImageFaceDelegate::face(const QModelIndex& index) const
         return FaceTagsIface();
     }
 
-    FaceTagsIface face = FaceTagsIface::fromVariant(extraData);
-    return face;
+    return FaceTagsIface::fromVariant(extraData);
 }
 
 void DigikamImageFaceDelegate::updateRects()
