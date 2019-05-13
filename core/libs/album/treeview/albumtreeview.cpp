@@ -40,6 +40,7 @@ AlbumTreeView::AlbumTreeView(QWidget* const parent, Flags flags)
     setRootIsDecorated(false);
     setDropIndicatorShown(false);
     setAutoExpandDelay(AUTOEXPANDDELAY);
+    setSelectionMode(QAbstractItemView::ExtendedSelection);
 
     if (flags & CreateDefaultModel)
     {
@@ -47,9 +48,7 @@ AlbumTreeView::AlbumTreeView(QWidget* const parent, Flags flags)
     }
 }
 
-AlbumTreeView::~AlbumTreeView()
-{
-}
+AlbumTreeView::~AlbumTreeView() {}
 
 void AlbumTreeView::setAlbumModel(AlbumModel* const model)
 {
@@ -89,6 +88,11 @@ PAlbum* AlbumTreeView::currentAlbum() const
 PAlbum* AlbumTreeView::albumForIndex(const QModelIndex& index) const
 {
     return dynamic_cast<PAlbum*> (m_albumFilterModel->albumForIndex(index));
+}
+
+QList<PAlbum*> AlbumTreeView::selectedPAlbums()
+{
+    return selectedAlbums<PAlbum>(selectionModel(), m_albumFilterModel);
 }
 
 void AlbumTreeView::setCurrentAlbums(const QList<Album*>& albums, bool selectInAlbumManager)

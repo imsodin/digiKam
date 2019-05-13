@@ -56,7 +56,7 @@ set(ECM_MIN_VERSION       "1.7.0")
 set(KF5_MIN_VERSION       "5.1.0")
 set(QT_MIN_VERSION        "5.6.0")
 set(LENSFUN_MIN_VERSION   "0.2.6.0")
-set(EXIV2_MIN_VERSION     "0.26")
+set(EXIV2_MIN_VERSION     "0.25")
 set(OPENCV_MIN_VERSION    "3.1.0")
 set(QTAV_MIN_VERSION      "1.12.0")
 set(KSANE_MIN_VERSION     "5.0.0")         # For digital scanner support.

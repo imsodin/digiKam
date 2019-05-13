@@ -129,7 +129,7 @@ void AlbumFolderViewSideBarWidget::setActive(bool active)
 {
     if (active)
     {
-        AlbumManager::instance()->setCurrentAlbums(QList<Album*>() << d->albumFolderView->currentAlbum());
+        AlbumManager::instance()->setCurrentAlbums(d->albumFolderView->selectedItems());
     }
 }
 

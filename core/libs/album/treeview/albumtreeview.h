@@ -46,6 +46,8 @@ public:
     PAlbum* currentAlbum()                          const;
     PAlbum* albumForIndex(const QModelIndex& index) const;
 
+    QList<PAlbum*> selectedPAlbums();
+
     void setAlbumFilterModel(CheckableAlbumFilterModel* const filterModel);
     void setAlbumModel(AlbumModel* const model);
 
